@@ -1,0 +1,7 @@
+engines: ["julia"]
+
+project:
+  type: default
+
+format:
+  gfm: default

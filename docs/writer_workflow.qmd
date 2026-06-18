@@ -1,0 +1,161 @@
+---
+title: "Writer Workflow"
+execute:
+  eval: false
+---
+
+# Writer Workflow
+
+This page shows the intended writer-first workflow:
+
+1. Build a cascade model with `CascadeDecays.jl`.
+2. Serialize the model to an amplitude-serialization-style document.
+3. Add optional metadata, domains, parameter points, or validation checks.
+4. Write the result as formatted JSON.
+
+The example is deliberately small. Its purpose is to show the data flow, not to
+represent a physical analysis.
+
+```julia
+using CascadeDecays
+using CascadeDecaysIO
+using HadronicLineshapes
+using ThreeBodyDecays: RecouplingLS
+```
+
+## Build a Cascade Model
+
+The `CascadeSystem` stores external masses and spins. The `DecayTopology`
+stores the binary cascade topology. The `DecayChain` attaches propagators and
+vertices to that topology.
+
+```julia
+system = CascadeSystem(
+    SystemSpins(0, 0, 0, 0; two_h0 = 0),
+    SystemMasses(1.0, 1.1, 1.2, 1.3; m0 = 5.0),
+)
+
+topology = DecayTopology((((1, 2), 3), 4))
+
+chain = DecayChain(
+    topology;
+    propagators = (
+        ((1, 2), 3) => Propagator(2, BreitWigner(2.4, 0.1)),
+        (1, 2) => Propagator(0, ConstantLineshape(1.0 + 0.0im)),
+    ),
+    vertices = (
+        (((1, 2), 3), 4) => Vertex(RecouplingLS((0, 2))),
+        ((1, 2), 3) => Vertex(RecouplingLS((0, 2))),
+        (1, 2) => Vertex(RecouplingLS((0, 0))),
+    ),
+)
+```
+
+The nested topology `(((1, 2), 3), 4)` is emitted as `[[[1, 2], 3], 4]`.
+Leaves are final-state particle indices; nested arrays describe intermediate
+two-body subsystems.
+
+## Build a JSON-Ready Document
+
+`amplitudeSerializationDict` is the high-level entry point. It calls the lower
+level `serializeToDict` methods, moves referenced lineshapes and form factors
+into the top-level `functions` section, and creates a `distributions` entry.
+
+```julia
+document = amplitudeSerializationDict(
+    system,
+    ["test_chain" => (1.0 + 0.0im, chain)];
+    particle_labels = ("D0", "pi+", "D-", "K+", "B+"),
+    name = "minimal_four_body_model",
+    variables = ["m1_2sq", "m1_2_3sq"],
+)
+```
+
+The resulting dictionary has the shape
+
+```json
+{
+  "distributions": [
+    {
+      "type": "HadronicUnpolarizedIntensity",
+      "name": "minimal_four_body_model",
+      "decay_description": {
+        "kinematics": {},
+        "reference_topology": [[[1, 2], 3], 4],
+        "chains": []
+      },
+      "variables": []
+    }
+  ],
+  "functions": []
+}
+```
+
+## Add Optional Sections
+
+The setter functions are small conveniences around dictionary insertion. They
+normalize Julia `Symbol` keys to JSON string keys and keep the usual schema
+locations easy to remember.
+
+```julia
+setDomains!(
+    document,
+    [
+        Dict(
+            "name" => "default",
+            "type" => "product_domain",
+            "axes" => [
+                Dict("name" => "m1_2sq", "min" => 0.0, "max" => 25.0),
+                Dict("name" => "m1_2_3sq", "min" => 0.0, "max" => 25.0),
+            ],
+        ),
+    ],
+)
+
+setMisc!(document, Dict("analysis" => "minimal example"))
+setParameterPoints!(document, [Dict("name" => "nominal", "parameters" => [])])
+```
+
+Validation follows the `ThreeBodyDecaysIO.jl` convention: checksum-like values
+belong in `misc.amplitude_model_checksums`, while the numerical coordinates of
+the validation point belong in `parameter_points`.
+
+```julia
+setValidation!(
+    document,
+    Dict(
+        "misc" => Dict(
+            "amplitude_model_checksums" => [
+                Dict(
+                    "distribution" => "minimal_four_body_model",
+                    "point" => "validation_point",
+                    "value" => 1.0,
+                ),
+            ],
+        ),
+        "parameter_points" => [
+            Dict("name" => "validation_point", "parameters" => []),
+        ],
+    ),
+)
+```
+
+## Write JSON
+
+Use `writeJson` to write an already constructed document.
+
+```julia
+writeJson("minimal_four_body_model.json", document)
+```
+
+Alternatively, pass a `CascadeSystem` and weighted chain collection directly:
+
+```julia
+writeJson(
+    "minimal_four_body_model.json",
+    system,
+    ["test_chain" => (1.0 + 0.0im, chain)];
+    particle_labels = ("D0", "pi+", "D-", "K+", "B+"),
+    name = "minimal_four_body_model",
+)
+```
