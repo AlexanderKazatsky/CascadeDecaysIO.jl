@@ -50,4 +50,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/$(REPO_SLUG)")
+deploydocs(; repo = "github.com/$(REPO_SLUG)", devbranch = get(ENV, "GITHUB_REF_NAME", "main"))
