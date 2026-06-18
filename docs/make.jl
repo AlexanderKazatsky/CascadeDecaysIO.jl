@@ -3,6 +3,7 @@ using Documenter
 
 const DOCS = @__DIR__
 const REPO_SLUG = get(ENV, "GITHUB_REPOSITORY", "RUB-EP1/CascadeDecaysIO.jl")
+const REPO_OWNER, REPO_NAME = split(REPO_SLUG, '/'; limit = 2)
 const REPO_URL = "https://github.com/$(REPO_SLUG)"
 const QMD = joinpath(DOCS, "writer_workflow.qmd")
 const GFM = joinpath(DOCS, "writer_workflow.md")
@@ -39,7 +40,7 @@ makedocs(;
     doctest = false,
     checkdocs = :none,
     format = Documenter.HTML(;
-        canonical = "https://$(replace(lowercase(REPO_SLUG), '/' => ".github.io/"))",
+        canonical = "https://$(lowercase(REPO_OWNER)).github.io/$(REPO_NAME)",
         repolink = REPO_URL,
     ),
     pages = [
@@ -50,4 +51,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/$(REPO_SLUG)", devbranch = get(ENV, "GITHUB_REF_NAME", "main"))
+deploydocs(; repo = "github.com/$(REPO_SLUG)", devbranch = "main")
