@@ -13,7 +13,7 @@ OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 ThreeBodyDecays = "e6563dab-9ca1-5843-bde3-2ccf38d63843"
 
 [sources]
-CascadeDecays = {path = "../CascadeDecays.jl"}
+CascadeDecays = {url = "https://github.com/RUB-EP1/CascadeDecays.jl.git", rev = "904e24829ce683a5a09d746f1059cd6df9bc306c"}
 FourVectors = {url = "https://github.com/mmikhasenko/FourVectors.jl", rev = "0ce8f0d419dcac15ba9e261c088292a1f6f6fe0e"}
 InstructionalDecayTrees = {url = "https://github.com/mmikhasenko/InstructionalDecayTrees.jl", rev = "9afbe76f45783ca49ef0d7ecde8b537eceec125a"}
 

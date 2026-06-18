@@ -2,6 +2,8 @@ using CascadeDecaysIO
 using Documenter
 
 const DOCS = @__DIR__
+const REPO_SLUG = get(ENV, "GITHUB_REPOSITORY", "RUB-EP1/CascadeDecaysIO.jl")
+const REPO_URL = "https://github.com/$(REPO_SLUG)"
 const QMD = joinpath(DOCS, "writer_workflow.qmd")
 const GFM = joinpath(DOCS, "writer_workflow.md")
 const TUTORIAL = joinpath(DOCS, "src", "writer-workflow.md")
@@ -32,13 +34,13 @@ write(TUTORIAL, documenter_tutorial_page(GFM))
 makedocs(;
     modules = [CascadeDecaysIO],
     authors = "RUB-EP1 and contributors",
-    repo = "https://github.com/RUB-EP1/CascadeDecaysIO.jl/blob/{commit}{path}#{line}",
+    repo = "$(REPO_URL)/blob/{commit}{path}#{line}",
     sitename = "CascadeDecaysIO.jl",
     doctest = false,
     checkdocs = :none,
     format = Documenter.HTML(;
-        canonical = "https://rub-ep1.github.io/CascadeDecaysIO.jl",
-        repolink = "https://github.com/RUB-EP1/CascadeDecaysIO.jl",
+        canonical = "https://$(replace(lowercase(REPO_SLUG), '/' => ".github.io/"))",
+        repolink = REPO_URL,
     ),
     pages = [
         "Home" => "index.md",
@@ -48,4 +50,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/RUB-EP1/CascadeDecaysIO.jl")
+deploydocs(; repo = "github.com/$(REPO_SLUG)")
